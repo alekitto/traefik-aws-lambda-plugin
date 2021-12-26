@@ -1,10 +1,6 @@
 package awslambdaplugin
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/lambda"
-
 	"bytes"
 	"context"
 	"encoding/base64"
@@ -15,10 +11,17 @@ import (
 	"net/url"
 	"reflect"
 	"strconv"
+
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/lambda"
 )
 
 // Config the plugin configuration.
 type Config struct {
+	AccessKey   string `json:"accessKey,omitempty"`
+	SecretKey   string `json:"secretKey,omitempty"`
 	Region      string `json:"region,omitempty"`
 	FunctionArn string `json:"functionArn,omitempty"`
 	Endpoint    string `json:"endpoint,omitempty"`
@@ -36,14 +39,14 @@ func CreateConfig() *Config {
 // AwsLambdaPlugin plugin main struct.
 type AwsLambdaPlugin struct {
 	next        http.Handler
-	region      string
 	functionArn string
 	name        string
 	client      *lambda.Lambda
 }
 
+// LambdaRequest represents a request to send to lambda
 type LambdaRequest struct {
-	HttpMethod                      string              `json:"httpMethod"`
+	HTTPMethod                      string              `json:"httpMethod"`
 	Path                            string              `json:"path"`
 	QueryStringParameters           map[string]string   `json:"queryStringParameters"`
 	MultiValueQueryStringParameters map[string][]string `json:"multiValueQueryStringParameters"`
@@ -53,6 +56,7 @@ type LambdaRequest struct {
 	IsBase64Encoded                 bool                `json:"isBase64Encoded"`
 }
 
+// LambdaResponse represents a response to a lambda HTTP request from LB
 type LambdaResponse struct {
 	StatusCode        int                 `json:"statusCode"`
 	StatusDescription string              `json:"statusDescription"`
@@ -64,10 +68,6 @@ type LambdaResponse struct {
 
 // New created a new AwsLambdaPlugin plugin.
 func New(ctx context.Context, next http.Handler, config *Config, name string) (http.Handler, error) {
-	if len(config.Region) == 0 {
-		return nil, fmt.Errorf("AWS region cannot be empty")
-	}
-
 	if len(config.FunctionArn) == 0 {
 		return nil, fmt.Errorf("function arn cannot be empty")
 	}
@@ -76,14 +76,25 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		SharedConfigState: session.SharedConfigEnable,
 	}))
 
+	var region *string
+	if len(config.Region) > 0 {
+		region = aws.String(config.Region)
+	}
+
 	var endpoint *string
 	if len(config.Endpoint) > 0 {
 		endpoint = aws.String(config.Endpoint)
 	}
 
+	var creds *credentials.Credentials
+	if len(config.AccessKey) > 0 && len(config.SecretKey) > 0 {
+		creds = credentials.NewStaticCredentials(config.AccessKey, config.SecretKey, "")
+	}
+
 	client := lambda.New(sess, &aws.Config{
-		Region:   &config.Region,
-		Endpoint: endpoint,
+		Region:      region,
+		Endpoint:    endpoint,
+		Credentials: creds,
 	})
 
 	return &AwsLambdaPlugin{
@@ -97,7 +108,7 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 func (a *AwsLambdaPlugin) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	base64Encoded, body := bodyToBase64(req)
 	resp := a.invokeFunction(LambdaRequest{
-		HttpMethod:                      req.Method,
+		HTTPMethod:                      req.Method,
 		Path:                            req.URL.Path,
 		QueryStringParameters:           valuesToMap(req.URL.Query()),
 		MultiValueQueryStringParameters: valuesToMultiMap(req.URL.Query()),
@@ -168,7 +179,6 @@ func (a *AwsLambdaPlugin) invokeFunction(request LambdaRequest) LambdaResponse {
 		FunctionName: aws.String(a.functionArn),
 		Payload:      payload,
 	})
-
 	if err != nil {
 		panic(err)
 	}

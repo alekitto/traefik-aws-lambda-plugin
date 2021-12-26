@@ -6,5 +6,7 @@ import: github.com/alekitto/traefik-aws-lambda-plugin
 summary: '[AWS Lambda] Call serverless applications'
 
 testData:
+  accessKey: 'aws-key'
+  secretKey: '@@not-a-key'
   region: 'us-east-1'
   functionArn: 'arn:aws:lambda:eu-west-1:000000000000:function:xxx:1'
