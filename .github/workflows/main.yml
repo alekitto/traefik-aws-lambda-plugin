@@ -16,7 +16,6 @@ jobs:
     env:
       GO_VERSION: 1.17
       GOLANGCI_LINT_VERSION: v1.42.1
-      YAEGI_VERSION: v0.11.2
       CGO_ENABLED: 0
     defaults:
       run:
@@ -50,9 +49,6 @@ jobs:
       - name: Install golangci-lint ${{ env.GOLANGCI_LINT_VERSION }}
         run: curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin ${GOLANGCI_LINT_VERSION}
 
-      - name: Install Yaegi ${{ env.YAEGI_VERSION }}
-        run: curl -sfL https://raw.githubusercontent.com/traefik/yaegi/master/install.sh | bash -s -- -b $(go env GOPATH)/bin ${YAEGI_VERSION}
-
       - name: Setup GOPATH
         run: go env -w GOPATH=${{ github.workspace }}/go
 
@@ -67,8 +63,3 @@ jobs:
 
       - name: Lint and Tests
         run: make
-
-      - name: Run tests with Yaegi
-        run: make yaegi_test
-        env:
-          GOPATH: ${{ github.workspace }}/go
