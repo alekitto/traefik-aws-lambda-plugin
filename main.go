@@ -1,3 +1,4 @@
+// Package awslambdaplugin exposes a middleware that invokes a lambda function mimicking the ALB.
 package awslambdaplugin
 
 import (
@@ -44,7 +45,7 @@ type AwsLambdaPlugin struct {
 	client      *lambda.Lambda
 }
 
-// LambdaRequest represents a request to send to lambda
+// LambdaRequest represents a request to send to lambda.
 type LambdaRequest struct {
 	HTTPMethod                      string              `json:"httpMethod"`
 	Path                            string              `json:"path"`
@@ -56,7 +57,7 @@ type LambdaRequest struct {
 	IsBase64Encoded                 bool                `json:"isBase64Encoded"`
 }
 
-// LambdaResponse represents a response to a lambda HTTP request from LB
+// LambdaResponse represents a response to a lambda HTTP request from LB.
 type LambdaResponse struct {
 	StatusCode        int                 `json:"statusCode"`
 	StatusDescription string              `json:"statusDescription"`
