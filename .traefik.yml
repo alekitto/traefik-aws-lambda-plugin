@@ -1,11 +1,10 @@
-displayName: Demo Plugin
+displayName: AWS Lambda Plugin
 type: middleware
 
-import: github.com/traefik/plugindemo
+import: github.com/alekitto/traefik-aws-lambda-plugin
 
-summary: '[Demo] Add Request Header'
+summary: '[AWS Lambda] Call serverless applications'
 
 testData:
-  Headers:
-    X-Demo: test
-    X-URL: '{{URL}}'
+  region: 'us-east-1'
+  functionArn: 'arn:aws:lambda:eu-west-1:000000000000:function:xxx:1'
