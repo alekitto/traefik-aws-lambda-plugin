@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	awslambdaplugin "github.com/alekitto/traefik-aws-lambda-plugin"
+	awslambdaplugin "github.com/alekitto/traefik-aws-lambda-plugin/src"
 	"github.com/stretchr/testify/assert"
 )
 
